@@ -1,0 +1,217 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criptografia Híbrida: RSA + Caos</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #1e1e2f; 
+            color: #ffffff; 
+            text-align: center; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 900px; 
+            margin: auto; 
+            background: #2a2a40; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5); 
+        }
+        .flex-row { 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: flex-start; 
+            gap: 20px; 
+            margin: 20px 0; 
+            flex-wrap: wrap;
+        }
+        .panel {
+            background: #383a59;
+            padding: 20px;
+            border-radius: 8px;
+            flex: 1;
+            min-width: 250px;
+        }
+        .rsa-panel {
+            border: 2px solid #f1c40f;
+        }
+        .chaos-panel {
+            border: 2px solid #e74c3c;
+        }
+        button { 
+            background-color: #2ecc71; 
+            color: #1e1e2f; 
+            border: none; 
+            padding: 12px 25px; 
+            font-size: 1.1em; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            margin: 10px;
+            transition: 0.3s;
+        }
+        button:hover { background-color: #27ae60; }
+        button:disabled { background-color: #555; cursor: not-allowed; }
+        input {
+            padding: 10px;
+            font-size: 1.2em;
+            border-radius: 8px;
+            border: 2px solid #6272a4;
+            background: #1e1e2f;
+            color: white;
+            text-align: center;
+            width: 80%;
+            margin-bottom: 10px;
+        }
+        .log-box {
+            background: #1e1e2f;
+            padding: 10px;
+            height: 150px;
+            overflow-y: auto;
+            text-align: left;
+            font-family: monospace;
+            font-size: 1.1em;
+            border-radius: 5px;
+            border: 1px solid #44475a;
+        }
+        .highlight { color: #f1c40f; font-weight: bold; }
+        .success { color: #2ecc71; font-weight: bold; }
+        .danger { color: #e74c3c; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Sistema Híbrido na Prática</h2>
+        <p>Fase 1: Troca de Semente (RSA) ➡️ Fase 2: Cifra de Fluxo (Caos)</p>
+
+        <!-- FASE 1: RSA -->
+        <div class="flex-row">
+            <div class="panel rsa-panel" id="emissorPanel">
+                <h3>🔒 Emissor (Você)</h3>
+                <label>Semente Caótica Inicial (0 a 1):</label><br>
+                <input type="number" id="seedInput" step="0.00001" min="0.00001" max="0.99999" value="0.12345">
+                <button onclick="enviarSementeRSA()" id="btnSendRsa">Cifrar com RSA e Enviar</button>
+                <p id="statusEmissor" class="highlight"></p>
+            </div>
+
+            <div class="panel rsa-panel" id="redePanel">
+                <h3>🌐 Meio Inseguro (Internet)</h3>
+                <p>O que o atacante vê:</p>
+                <div class="log-box" id="logRede" style="height: 80px; text-align: center; line-height: 80px; font-size: 1.5em; color: #ff79c6;">
+                    [Aguardando Dados...]
+                </div>
+            </div>
+
+            <div class="panel rsa-panel" id="receptorPanel">
+                <h3>🗝️ Receptor (Destino)</h3>
+                <p>Semente Destrancada:</p>
+                <h3 id="seedRecebida" class="success">---</h3>
+                <button onclick="iniciarCaos()" id="btnStartChaos" disabled>Iniciar Motor Caótico</button>
+            </div>
+        </div>
+
+        <!-- FASE 2: CAOS E XOR -->
+        <div class="panel chaos-panel" id="chaosWorkspace" style="display: none; margin-top: 30px;">
+            <h3>🌀 Fase 2: Motor Caótico Sincronizado</h3>
+            <p>Fórmula: X = 4 * X * (1 - X) | Limiar: >= 0.5 vira bit 1, < 0.5 vira bit 0</p>
+            
+            <div class="flex-row">
+                <div style="flex: 1;">
+                    <h4>Seu Motor (Emissor)</h4>
+                    <label>Mensagem (Bits):</label><br>
+                    <input type="text" id="msgInput" value="101100" maxlength="20" oninput="this.value = this.value.replace(/[^01]/g, '')">
+                    <button onclick="gerarProximoBit()">Gerar e Cifrar (XOR)</button>
+                    <div class="log-box" id="logEmissor"></div>
+                </div>
+
+                <div style="flex: 1;">
+                    <h4>Motor do Receptor</h4>
+                    <p>Recebendo texto cifrado e decifrando automaticamente...</p>
+                    <div class="log-box" id="logReceptor"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let sementeEmissor = 0;
+        let sementeReceptor = 0;
+        let originalMsg = [];
+        let r = 4; // Constante do Caos
+
+        // Simula a criptografia RSA
+        function enviarSementeRSA() {
+            let seed = parseFloat(document.getElementById('seedInput').value);
+            if(seed <= 0 || seed >= 1 || isNaN(seed)) {
+                alert("A semente deve ser um decimal entre 0 e 1 excluso (ex: 0.12345)");
+                return;
+            }
+            sementeEmissor = seed;
+            
+            document.getElementById('statusEmissor').innerText = "Trancado com Chave Pública!";
+            
+            // Simula o pacote trancado na rede
+            let pacoteFalso = "0x" + Math.random().toString(16).substr(2, 8).toUpperCase() + "...";
+            document.getElementById('logRede').innerText = pacoteFalso;
+
+            // Simula o receptor destrancando com a Chave Privada
+            setTimeout(() => {
+                sementeReceptor = seed; // Destrancou perfeitamente
+                document.getElementById('seedRecebida').innerText = sementeReceptor;
+                document.getElementById('btnStartChaos').disabled = false;
+                document.getElementById('btnSendRsa').disabled = true;
+                document.getElementById('seedInput').disabled = true;
+            }, 1500);
+        }
+
+        // Ativa a interface da Fase 2
+        function iniciarCaos() {
+            let msg = document.getElementById('msgInput').value;
+            if(!msg) { alert("Digite uma mensagem!"); return; }
+            originalMsg = msg.split('');
+            
+            document.getElementById('chaosWorkspace').style.display = 'block';
+            document.getElementById('btnStartChaos').disabled = true;
+        }
+
+        // Executa o Mapa Logístico para ambos os lados
+        function gerarProximoBit() {
+            let msg = document.getElementById('msgInput').value;
+            if(!msg) { alert("Digite uma mensagem!"); return; }
+            originalMsg = msg.split('');
+
+            for(let i = originalMsg.length; i > 0; i--) {
+                
+                if(originalMsg.length === 0) {
+                    alert("Mensagem finalizada!");
+                return;
+                }
+
+                let msgBit = parseInt(originalMsg.shift());
+
+                // --- LADO DO EMISSOR ---
+                // Aplica equação: X = 4 * X * (1 - X)
+                sementeEmissor = r * sementeEmissor * (1 - sementeEmissor);
+                let bitChaveEmissor = (sementeEmissor >= 0.5) ? 1 : 0;
+                let bitCifrado = msgBit ^ bitChaveEmissor; // XOR
+                
+                document.getElementById('logEmissor').innerHTML += 
+                    `X = ${sementeEmissor.toFixed(5)} ➡️ Chave: <b>${bitChaveEmissor}</b> | Msg: ${msgBit} | Cifrado: <span class="danger">${bitCifrado}</span><br>`;
+
+                // --- LADO DO RECEPTOR ---
+                // Receptor tem a mesma semente, então o cálculo resulta no mesmo número
+                sementeReceptor = r * sementeReceptor * (1 - sementeReceptor);
+                let bitChaveReceptor = (sementeReceptor >= 0.5) ? 1 : 0;
+                let bitDecifrado = bitCifrado ^ bitChaveReceptor; // XOR reverte
+                
+                document.getElementById('logReceptor').innerHTML += 
+                `X = ${sementeReceptor.toFixed(5)} ➡️ Chave: <b>${bitChaveReceptor}</b> | Recebeu: <span class="danger">${bitCifrado}</span> | Decifrado: <span class="success">${bitDecifrado}</span><br>`;
+            }
+        }
+    </script>
+</body>
+</html>

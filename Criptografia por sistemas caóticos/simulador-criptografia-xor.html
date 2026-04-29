@@ -1,0 +1,232 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Criptografia de Fluxo - Simulador Interativo</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #1e1e2f; 
+            color: #ffffff; 
+            text-align: center; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 800px; 
+            margin: auto; 
+            background: #2a2a40; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5); 
+        }
+        .flex-row { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            gap: 15px; 
+            margin: 20px 0; 
+            flex-wrap: wrap;
+        }
+        .box { 
+            width: 60px; 
+            height: 60px; 
+            background-color: #e74c3c; /* Vermelho LFSR */
+            color: white; 
+            font-size: 2em; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 10px; 
+        }
+        .msg-bit { 
+            width: 50px; 
+            height: 50px; 
+            background-color: #3498db; /* Azul Mensagem */
+            color: white; 
+            font-size: 1.8em; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 8px; 
+        }
+        .cipher-bit { 
+            width: 50px; 
+            height: 50px; 
+            background-color: #9b59b6; /* Roxo Criptografado */
+            color: white; 
+            font-size: 1.8em; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 8px; 
+        }
+        .xor-gate {
+            font-size: 2.5em;
+            color: #f1c40f;
+            font-weight: bold;
+        }
+        button { 
+            background-color: #2ecc71; 
+            color: #1e1e2f; 
+            border: none; 
+            padding: 12px 25px; 
+            font-size: 1.3em; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            margin: 10px;
+        }
+        input {
+            padding: 12px;
+            font-size: 1.5em;
+            border-radius: 8px;
+            border: 2px solid #6272a4;
+            background: #1e1e2f;
+            color: white;
+            text-align: center;
+            width: 200px;
+            letter-spacing: 5px;
+        }
+        .highlight-border {
+            border: 4px solid #f1c40f;
+        }
+        .panel {
+            background: #383a59;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Criptografia XOR na Prática</h2>
+        <p style="font-size: 1.2em;">Vamos criptografar uma mensagem binária usando a semente LFSR base <b>[1, 0, 1, 1]</b>.</p>
+        
+        <div style="margin: 30px 0;">
+            <label style="font-size: 1.3em; display: block; margin-bottom: 10px;">Digite sua mensagem (apenas 0s e 1s):</label>
+            <input type="text" id="msgInput" value="101011" maxlength="10" oninput="this.value = this.value.replace(/[^01]/g, '')">
+            <button onclick="startCripto()">Carregar Mensagem</button>
+        </div>
+
+        <div id="workspace" style="display: none;">
+            
+            <div class="panel">
+                <h3>1. Chave Sendo Gerada (LFSR)</h3>
+                <div class="flex-row" id="lfsrContainer"></div>
+            </div>
+
+            <div class="panel" style="background: #282a36; border: 2px dashed #f1c40f;">
+                <h3>2. A Mágica (Operação XOR)</h3>
+                <p>Bit da Chave ⊕ Bit da Mensagem = Bit Cifrado</p>
+                <div class="flex-row">
+                    <div id="currentKey" class="box" style="background: #f1c40f; color: black;">?</div>
+                    <div class="xor-gate">⊕</div>
+                    <div id="currentMsg" class="msg-bit" style="background: #e67e22;">?</div>
+                    <div class="xor-gate">=</div>
+                    <div id="currentCipher" class="cipher-bit">?</div>
+                </div>
+                <button id="btnStep" onclick="nextStep()" style="background-color: #f1c40f; margin-top: 20px;">Processar Próximo Bit</button>
+            </div>
+
+            <div class="panel">
+                <h3>3. Mensagem Original Restante</h3>
+                <div class="flex-row" id="msgContainer"></div>
+            </div>
+
+            <div class="panel">
+                <h3>4. Resultado Final (Texto Cifrado)</h3>
+                <div class="flex-row" id="cipherContainer"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        let lfsr = [1, 0, 1, 1];
+        let originalMessage = [];
+        let cipheredMessage = [];
+
+        function startCripto() {
+            let input = document.getElementById('msgInput').value;
+            if(!input) {
+                alert("Digite pelo menos um bit (0 ou 1)!");
+                return;
+            }
+            originalMessage = input.split('');
+            cipheredMessage = [];
+            lfsr = [1, 0, 1, 1]; // Reseta a semente
+            
+            document.getElementById('workspace').style.display = 'block';
+            document.getElementById('btnStep').disabled = false;
+            document.getElementById('btnStep').innerText = "Processar Próximo Bit";
+            
+            // Reseta a visualização central
+            document.getElementById('currentKey').innerText = '?';
+            document.getElementById('currentMsg').innerText = '?';
+            document.getElementById('currentCipher').innerText = '?';
+
+            renderState();
+        }
+
+        function renderState() {
+            // Renderiza LFSR
+            let lfsrHtml = '';
+            lfsr.forEach((bit, index) => {
+                // Destaca os bits usados para o feedback (regra)
+                let borderClass = (index === 0 || index === 3) ? 'highlight-border' : '';
+                lfsrHtml += `<div class="box ${borderClass}">${bit}</div>`;
+            });
+            document.getElementById('lfsrContainer').innerHTML = lfsrHtml;
+
+            // Renderiza Mensagem Restante
+            let msgHtml = '';
+            originalMessage.forEach(bit => {
+                msgHtml += `<div class="msg-bit">${bit}</div>`;
+            });
+            document.getElementById('msgContainer').innerHTML = msgHtml;
+
+            // Renderiza Texto Cifrado
+            let cipherHtml = '';
+            cipheredMessage.forEach(bit => {
+                cipherHtml += `<div class="cipher-bit">${bit}</div>`;
+            });
+            document.getElementById('cipherContainer').innerHTML = cipherHtml;
+        }
+
+        function nextStep() {
+            if(originalMessage.length === 0) {
+                alert("Mensagem totalmente criptografada! No mundo real, você enviaria esses bits roxos pela rede.");
+                document.getElementById('btnStep').disabled = true;
+                document.getElementById('btnStep').innerText = "Concluído";
+                return;
+            }
+
+            // 1. Extrai o bit da chave (último do LFSR) e o bit da mensagem
+            let keyBit = lfsr[3];
+            let msgBit = parseInt(originalMessage.shift()); // Remove o primeiro bit da mensagem
+
+            // 2. Operação XOR
+            let cipherBit = keyBit ^ msgBit;
+            cipheredMessage.push(cipherBit);
+
+            // 3. Atualiza o visualizador central
+            document.getElementById('currentKey').innerText = keyBit;
+            document.getElementById('currentMsg').innerText = msgBit;
+            document.getElementById('currentCipher').innerText = cipherBit;
+
+            // 4. Rotaciona o LFSR para o próximo ciclo (Feedback = index 0 XOR index 3)
+            let newFeedback = lfsr[0] ^ lfsr[3];
+            lfsr.pop(); // Remove o último
+            lfsr.unshift(newFeedback); // Insere o feedback no início
+
+            renderState();
+        }
+    </script>
+</body>
+</html>

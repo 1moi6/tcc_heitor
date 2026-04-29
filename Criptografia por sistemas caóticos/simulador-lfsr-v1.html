@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulador LFSR - Criptografia</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            background-color: #1e1e2f; 
+            color: #ffffff; 
+            text-align: center; 
+            padding: 20px; 
+        }
+        .container { 
+            max-width: 700px; 
+            margin: auto; 
+            background: #2a2a40; 
+            padding: 30px; 
+            border-radius: 12px; 
+            box-shadow: 0 8px 16px rgba(0,0,0,0.5); 
+        }
+        .boxes { 
+            display: flex; 
+            justify-content: center; 
+            align-items: center;
+            gap: 15px; 
+            margin: 40px 0; 
+        }
+        .box { 
+            width: 80px; 
+            height: 80px; 
+            background-color: #e74c3c; 
+            color: white; 
+            font-size: 2.5em; 
+            font-weight: bold; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            border-radius: 12px; 
+            border: 4px solid #c0392b; 
+            transition: all 0.3s ease;
+        }
+        .box.active-rule { 
+            border-color: #f1c40f; 
+            box-shadow: 0 0 15px #f1c40f; 
+        }
+        .box-out {
+            background-color: #3498db; 
+            border-color: #2980b9;
+        }
+        button { 
+            background-color: #2ecc71; 
+            color: #1e1e2f; 
+            border: none; 
+            padding: 15px 35px; 
+            font-size: 1.4em; 
+            cursor: pointer; 
+            border-radius: 8px; 
+            font-weight: bold; 
+            transition: background 0.3s;
+        }
+        button:hover { 
+            background-color: #27ae60; 
+            color: white;
+        }
+        .log { 
+            margin-top: 40px; 
+            text-align: left; 
+            background: #1e1e2f; 
+            padding: 20px; 
+            border-radius: 8px; 
+            height: 250px; 
+            overflow-y: auto; 
+        }
+        table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            margin-top: 15px; 
+            font-size: 1.1em;
+        }
+        th, td { 
+            border: 1px solid #44475a; 
+            padding: 12px; 
+            text-align: center; 
+        }
+        th { 
+            background-color: #6272a4; 
+            color: white; 
+        }
+        .highlight { 
+            color: #f1c40f; 
+            font-weight: bold; 
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Simulador LFSR (3 Caixas)</h2>
+        <p style="font-size: 1.2em;">Regra: Se <b>Caixa 1</b> e <b>Caixa 3</b> forem iguais = <span class="highlight">0</span>. Se diferentes = <span class="highlight">1</span>.</p>
+        
+        <div class="boxes">
+            <div class="box active-rule" id="box1">1</div>
+            <div class="box" id="box2">0</div>
+            <div class="box active-rule" id="box3">1</div>
+            <div style="font-size: 2.5em; margin: 0 10px;">➡️</div>
+            <div class="box box-out" id="boxOut">?</div>
+        </div>
+
+        <button onclick="nextCycle()">Executar Ciclo</button>
+
+        <div class="log">
+            <h3>Registro do Sistema (Log)</h3>
+            <table id="logTable">
+                <tr>
+                    <th>Ciclo</th>
+                    <th>Estado Atual (C1, C2, C3)</th>
+                    <th>Número Gerado</th>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        let state = [1, 0, 1];
+        let cycle = 0;
+
+        function updateUI(out) {
+            document.getElementById('box1').innerText = state[0];
+            document.getElementById('box2').innerText = state[1];
+            document.getElementById('box3').innerText = state[2];
+            if (out !== undefined) {
+                document.getElementById('boxOut').innerText = out;
+            }
+        }
+
+        function nextCycle() {
+            cycle++;
+            let currentStateStr = state.join(" - ");
+            
+            // Regra: Feedback
+            let feedback = (state[0] === state[2]) ? 0 : 1;
+            
+            // Deslocamento: Remove o último
+            let out = state.pop();
+            
+            // Adiciona o novo no início
+            state.unshift(feedback);
+            
+            updateUI(out);
+            
+            // Atualiza tabela
+            let table = document.getElementById("logTable");
+            let row = table.insertRow(-1);
+            row.insertCell(0).innerText = cycle;
+            row.insertCell(1).innerText = currentStateStr;
+            
+            let outCell = row.insertCell(2);
+            outCell.innerHTML = "<b style='color: #3498db; font-size: 1.2em;'>" + feedback + "</b>";
+            
+            // Alerta de Loop (Opcional visual)
+            if(cycle === 7) {
+                setTimeout(() => alert("Alerta do Sistema! Chegamos ao Ciclo 8. O padrão voltou à Semente Inicial e começará a se repetir."), 100);
+            }
+        }
+        
+        // Setup inicial
+        updateUI();
+    </script>
+</body>
+</html>

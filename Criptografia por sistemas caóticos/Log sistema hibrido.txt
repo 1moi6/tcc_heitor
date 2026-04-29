@@ -1,0 +1,49 @@
+Mensagem: 10110011001101110011
+
+Chave: 0,12345
+X = 0.43284 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.98196 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.07086 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.26337 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.77603 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.69524 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.84753 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.51689 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.99886 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.00456 ➡️ Chave: 0 | Msg: 0 | Cifrado: 0
+X = 0.01814 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.07126 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.26472 ➡️ Chave: 0 | Msg: 0 | Cifrado: 0
+X = 0.77857 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.68959 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.85623 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.49241 ➡️ Chave: 0 | Msg: 0 | Cifrado: 0
+X = 0.99977 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.00092 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.00368 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+
+11111100101100000111
+
+Chave: 0,12346
+X = 0.43287 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.98197 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.07080 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.26316 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.77562 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.69613 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.84613 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.52077 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.99827 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.00689 ➡️ Chave: 0 | Msg: 0 | Cifrado: 0
+X = 0.02738 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.10653 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.38071 ➡️ Chave: 0 | Msg: 0 | Cifrado: 0
+X = 0.94308 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.21471 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+X = 0.67444 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.87828 ➡️ Chave: 1 | Msg: 0 | Cifrado: 1
+X = 0.42762 ➡️ Chave: 0 | Msg: 0 | Cifrado: 0
+X = 0.97905 ➡️ Chave: 1 | Msg: 1 | Cifrado: 0
+X = 0.08206 ➡️ Chave: 0 | Msg: 1 | Cifrado: 1
+
+11111100101100101001

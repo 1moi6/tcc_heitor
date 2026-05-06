@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Laboratório de Caos: Texto Completo</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #1e1e2f; color: #ffffff; text-align: center; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: #2a2a40; padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.5); }
+        .panel { background: #383a59; padding: 20px; border-radius: 8px; margin-bottom: 20px; text-align: left; }
+        h3 { border-bottom: 2px solid #6272a4; padding-bottom: 10px; color: #8be9fd; }
+        input[type="text"], input[type="number"] { padding: 10px; font-size: 1.2em; border-radius: 8px; border: 2px solid #6272a4; background: #1e1e2f; color: white; width: 90%; margin-bottom: 10px; }
+        button { background-color: #50fa7b; color: #1e1e2f; border: none; padding: 15px 30px; font-size: 1.2em; cursor: pointer; border-radius: 8px; font-weight: bold; width: 100%; transition: 0.3s; }
+        button:hover { background-color: #40c863; }
+        .code { font-family: monospace; color: #f1c40f; background: #282a36; padding: 15px; border-radius: 5px; display: block; word-wrap: break-word; font-size: 1.2em; line-height: 1.5; }
+        .label { font-weight: bold; color: #ff79c6; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Criptografia de Texto com Mapa Logístico</h2>
+        <p>Transformando texto real em binário e mascarando com o caos.</p>
+
+        <div class="panel">
+            <h3>Entrada de Dados</h3>
+            <label class="label">Texto da Mensagem:</label><br>
+            <input type="text" id="msgInput" value="Hello, World"><br><br>
+            <label class="label">Semente Caótica (0.0 a 1.0):</label><br>
+            <input type="number" id="seedInput" step="0.00001" min="0.00001" max="0.99999" value="0.12345"><br><br>
+            <button onclick="processarCaos()">Processar Criptografia Integral</button>
+        </div>
+
+        <div id="resultados" style="display: none;">
+            <div class="panel">
+                <h3>1. Conversão UTF-8 para Binário</h3>
+                <span class="code" id="binMsg"></span>
+            </div>
+
+            <div class="panel">
+                <h3>2. Fluxo Caótico (Keystream Gerado)</h3>
+                <p>Equação iterada: X = 4 * X * (1 - X). Limiar: >= 0.5 (1), < 0.5 (0).</p>
+                <span class="code" id="binChaos" style="color: #ff5555;"></span>
+            </div>
+
+            <div class="panel">
+                <h3>3. Cifragem (Mensagem ⊕ Caos)</h3>
+                <span class="code" id="binCipher" style="color: #bd93f9;"></span>
+            </div>
+
+            <div class="panel">
+                <h3>4. Texto Cifrado Resultante (Ilegível)</h3>
+                <p>Convertendo o binário cifrado de volta para caracteres:</p>
+                <span class="code" id="textCipher" style="color: #ffb86c; font-size: 1.5em; text-align: center;"></span>
+            </div>
+
+            <div class="panel" style="border: 2px solid #50fa7b;">
+                <h3 style="color: #50fa7b;">5. Prova de Decifragem</h3>
+                <p>Aplicando a mesma chave caótica no Texto Cifrado restaura a mensagem:</p>
+                <span class="code" id="textDecrypted" style="color: #ffffff; text-align: center; font-size: 1.5em;"></span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function processarCaos() {
+            const text = document.getElementById('msgInput').value;
+            let seed = parseFloat(document.getElementById('seedInput').value);
+            const r = 4.0;
+            
+            if(!text || isNaN(seed) || seed <= 0 || seed >= 1) {
+                alert("Verifique os campos de entrada.");
+                return;
+            }
+
+            // 1. Texto para Binário
+            let binMsg = "";
+            for (let i = 0; i < text.length; i++) {
+                binMsg += text.charCodeAt(i).toString(2).padStart(8, '0');
+            }
+
+            // 2. Motor Caótico
+            let binChaos = "";
+            let currentX = seed;
+            for (let i = 0; i < binMsg.length; i++) {
+                currentX = r * currentX * (1 - currentX);
+                binChaos += (currentX >= 0.5) ? "1" : "0";
+            }
+
+            // 3. Cifragem XOR
+            let binCipher = "";
+            for (let i = 0; i < binMsg.length; i++) {
+                binCipher += (binMsg[i] === binChaos[i]) ? "0" : "1";
+            }
+
+            // 4. Binário Cifrado para Texto
+            let textCipher = "";
+            for (let i = 0; i < binCipher.length; i += 8) {
+                let byte = binCipher.substring(i, i + 8);
+                textCipher += String.fromCharCode(parseInt(byte, 2));
+            }
+
+            // 5. Decifragem (Prova)
+            let binDecrypted = "";
+            for (let i = 0; i < binCipher.length; i++) {
+                binDecrypted += (binCipher[i] === binChaos[i]) ? "0" : "1";
+            }
+            let textDecrypted = "";
+            for (let i = 0; i < binDecrypted.length; i += 8) {
+                let byte = binDecrypted.substring(i, i + 8);
+                textDecrypted += String.fromCharCode(parseInt(byte, 2));
+            }
+
+            // Exibir resultados
+            document.getElementById('binMsg').innerText = binMsg;
+            document.getElementById('binChaos').innerText = binChaos;
+            document.getElementById('binCipher').innerText = binCipher;
+            document.getElementById('textCipher').innerText = textCipher;
+            document.getElementById('textDecrypted').innerText = textDecrypted;
+            
+            document.getElementById('resultados').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

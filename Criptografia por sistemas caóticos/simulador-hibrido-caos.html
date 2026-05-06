@@ -42,6 +42,10 @@
         .chaos-panel {
             border: 2px solid #e74c3c;
         }
+        .attack-panel {
+            border: 2px solid #9b59b6;
+            background: #2b1f31;
+        }
         button { 
             background-color: #2ecc71; 
             color: #1e1e2f; 
@@ -56,6 +60,12 @@
         }
         button:hover { background-color: #27ae60; }
         button:disabled { background-color: #555; cursor: not-allowed; }
+        .btn-attack {
+            background-color: #9b59b6;
+            color: white;
+        }
+        .btn-attack:hover { background-color: #8e44ad; }
+        
         input {
             padding: 10px;
             font-size: 1.2em;
@@ -135,6 +145,24 @@
                 </div>
             </div>
         </div>
+
+        <div class="panel attack-panel" id="attackWorkspace" style="display: none; margin-top: 30px;">
+            <h3>🦹 Aba de Ataque: Quebrando o Caos (Known-Plaintext Attack)</h3>
+            <p>O atacante sabe que a semente só tem 5 casas decimais (99.999 combinações). Se ele interceptar o texto cifrado e adivinhar os <strong>3 primeiros bits</strong> da mensagem original, ele quebra o sistema.</p>
+            
+            <div class="flex-row">
+                <div style="flex: 1;">
+                    <label>Bits Cifrados (Interceptados na Rede):</label><br>
+                    <input type="text" id="atkCiphertext" readonly style="background: #1e1e2f; color: #ff79c6; border-color: #ff79c6;">
+                    <br>
+                    <label>Palpite do Texto Original (Known Plaintext):</label><br>
+                    <input type="text" id="atkPlaintext" value="101" maxlength="20" oninput="this.value = this.value.replace(/[^01]/g, '')">
+                    <p style="font-size: 0.9em; color: #bbb;">Assumimos que o atacante "sabe" que a mensagem começa com 101.</p>
+                    <button onclick="executarForcaBruta()" class="btn-attack">Quebrar Semente via Força Bruta</button>
+                    <div class="log-box" id="logAtaque" style="height: 180px;"></div>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -168,13 +196,14 @@
             }, 1500);
         }
 
-        // Ativa a interface da Fase 2
+        // Ativa a interface da Fase 2 e mostra a aba de Ataque
         function iniciarCaos() {
             let msg = document.getElementById('msgInput').value;
             if(!msg) { alert("Digite uma mensagem!"); return; }
             originalMsg = msg.split('');
             
             document.getElementById('chaosWorkspace').style.display = 'block';
+            document.getElementById('attackWorkspace').style.display = 'block'; 
             document.getElementById('btnStartChaos').disabled = true;
         }
 
@@ -188,28 +217,131 @@
                 
                 if(originalMsg.length === 0) {
                     alert("Mensagem finalizada!");
-                return;
+                    return;
                 }
 
                 let msgBit = parseInt(originalMsg.shift());
 
                 // --- LADO DO EMISSOR ---
-                // Aplica equação: X = 4 * X * (1 - X)
                 sementeEmissor = r * sementeEmissor * (1 - sementeEmissor);
                 let bitChaveEmissor = (sementeEmissor >= 0.5) ? 1 : 0;
                 let bitCifrado = msgBit ^ bitChaveEmissor; // XOR
                 
+                // POPULA O INTERCEPTADOR DO ATACANTE
+                document.getElementById('atkCiphertext').value += bitCifrado;
+
                 document.getElementById('logEmissor').innerHTML += 
                     `X = ${sementeEmissor.toFixed(5)} ➡️ Chave: <b>${bitChaveEmissor}</b> | Msg: ${msgBit} | Cifrado: <span class="danger">${bitCifrado}</span><br>`;
 
                 // --- LADO DO RECEPTOR ---
-                // Receptor tem a mesma semente, então o cálculo resulta no mesmo número
                 sementeReceptor = r * sementeReceptor * (1 - sementeReceptor);
                 let bitChaveReceptor = (sementeReceptor >= 0.5) ? 1 : 0;
                 let bitDecifrado = bitCifrado ^ bitChaveReceptor; // XOR reverte
                 
                 document.getElementById('logReceptor').innerHTML += 
                 `X = ${sementeReceptor.toFixed(5)} ➡️ Chave: <b>${bitChaveReceptor}</b> | Recebeu: <span class="danger">${bitCifrado}</span> | Decifrado: <span class="success">${bitDecifrado}</span><br>`;
+            }
+        }
+
+        // --- ATAQUE (MÚLTIPLAS COLISÕES E AMOSTRA DE MENSAGENS) ---
+        function executarForcaBruta() {
+            let cipherText = document.getElementById('atkCiphertext').value;
+            let plainText = document.getElementById('atkPlaintext').value;
+            let log = document.getElementById('logAtaque');
+            
+            if (!cipherText || !plainText) {
+                alert("Gere os bits cifrados primeiro e digite um palpite para o texto original.");
+                return;
+            }
+
+            if (cipherText.length < plainText.length) {
+                alert("O texto plano adivinhado não pode ser maior que o cifrado disponível.");
+                return;
+            }
+
+            log.innerHTML = "Iniciando varredura no espaço da semente (0.00001 a 0.99999)...<br>";
+
+            // O atacante deduz os bits do Keystream baseados no palpite
+            let expectedKeyStream = [];
+            for (let i = 0; i < plainText.length; i++) {
+                expectedKeyStream.push(parseInt(cipherText[i]) ^ parseInt(plainText[i]));
+            }
+
+            let t0 = performance.now();
+            let sementesEncontradas = [];
+
+            // Varre todas as 99.999 sementes possíveis
+            for (let s = 1; s <= 99999; s++) {
+                let candidateSeed = s / 100000; 
+                let X = candidateSeed;
+                let match = true;
+
+                // Simula o motor para cada candidato
+                for (let i = 0; i < expectedKeyStream.length; i++) {
+                    X = 4 * X * (1 - X);
+                    let bit = (X >= 0.5) ? 1 : 0;
+                    
+                    if (bit !== expectedKeyStream[i]) {
+                        match = false;
+                        break;
+                    }
+                }
+
+                if (match) {
+                    sementesEncontradas.push(candidateSeed.toFixed(5));
+                }
+            }
+            
+            let t1 = performance.now();
+
+            if (sementesEncontradas.length > 0) {
+                log.innerHTML += `<br><span class="highlight">VULNERABILIDADE(S) ENCONTRADA(S)!</span><br>`;
+                log.innerHTML += `Tempo de processamento: ${(t1 - t0).toFixed(2)} ms<br>`;
+                
+                if(sementesEncontradas.length === 1) {
+                    log.innerHTML += `Apenas uma semente foi capaz de gerar esses bits: <b>${sementesEncontradas[0]}</b> (Identificação Exata)<br>`;
+                    
+                    // Decifra a mensagem exata
+                    let decryptedMsg = "";
+                    let X_dec = parseFloat(sementesEncontradas[0]);
+                    for (let i = 0; i < cipherText.length; i++) {
+                        X_dec = 4 * X_dec * (1 - X_dec);
+                        let keyBit = (X_dec >= 0.5) ? 1 : 0;
+                        decryptedMsg += parseInt(cipherText[i]) ^ keyBit;
+                    }
+                    log.innerHTML += `<br>Mensagem Completa (Vazada): <span class="success">${decryptedMsg}</span><br>`;
+                    
+                } else {
+                    log.innerHTML += `🚨 <b>Colisão de Chaves!</b> Foram encontradas ${sementesEncontradas.length} sementes que geram exatamente os mesmos bits iniciais.<br>`;
+                    log.innerHTML += `Algumas sementes compatíveis: <span class="danger">${sementesEncontradas.slice(0, 10).join(', ')}</span> ${sementesEncontradas.length > 10 ? '...' : ''}<br><br>`;
+                    
+                    // Mostra a amostra de divergência caótica
+                    log.innerHTML += `<b>Possíveis Mensagens Originais (Amostra de 5 tentativas):</b><br>`;
+                    let limit = Math.min(sementesEncontradas.length, 5);
+                    
+                    for(let k = 0; k < limit; k++) {
+                        let seedToTest = sementesEncontradas[k];
+                        let decryptedMsg = "";
+                        let X_dec = parseFloat(seedToTest);
+                        
+                        for (let i = 0; i < cipherText.length; i++) {
+                            X_dec = 4 * X_dec * (1 - X_dec);
+                            let keyBit = (X_dec >= 0.5) ? 1 : 0;
+                            decryptedMsg += parseInt(cipherText[i]) ^ keyBit;
+                        }
+                        
+                        log.innerHTML += `Com semente ${seedToTest} ➡️ <span class="danger">${decryptedMsg}</span><br>`;
+                    }
+                    
+                    if(sementesEncontradas.length > 5) {
+                        log.innerHTML += `<i>(E mais ${sementesEncontradas.length - limit} variações de mensagens...)</i><br>`;
+                    }
+                    
+                    log.innerHTML += `<br><i>Nota: O ataque falhou em isolar a mensagem real. Aumente o palpite do texto original (mínimo de 17 bits) para forçar a divergência e encontrar a semente única!</i><br>`;
+                }
+
+            } else {
+                log.innerHTML += `<br><span class="danger">Nenhuma semente compatível. O palpite do texto estava incorreto.</span>`;
             }
         }
     </script>
